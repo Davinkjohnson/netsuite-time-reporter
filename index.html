@@ -97,22 +97,34 @@
                         <h5 class="card-title">Settings</h5>
                         <form id="settingsForm">
                             <div class="mb-3">
-                                <label for="netsuiteUrl" class="form-label">Netsuite URL</label>
-                                <input type="url" class="form-control" id="netsuiteUrl" name="netsuiteUrl" required>
-                                <div class="form-text">Example: https://1234567.app.netsuite.com (your Netsuite login URL)</div>
-                            </div>
-                            <div class="mb-3">
-                                <label for="accountId" class="form-label">Account ID</label>
-                                <input type="text" class="form-control" id="accountId" name="accountId" required>
-                                <div class="form-text">Your Account ID is the number in your Netsuite URL (e.g., if your URL is https://1234567.app.netsuite.com, your Account ID is 1234567)</div>
-                            </div>
-                            <div class="mb-3">
                                 <label for="username" class="form-label">Username</label>
                                 <input type="text" class="form-control" id="username" name="username" required>
                             </div>
                             <div class="mb-3">
                                 <label for="password" class="form-label">Password</label>
                                 <input type="password" class="form-control" id="password" name="password" required>
+                            </div>
+                            <hr>
+                            <h6>Token-based Authentication (TBA) Credentials</h6>
+                            <div class="alert alert-info">
+                                Using Netsuite Account: https://5507085.app.netsuite.com
+                            </div>
+                            <div class="mb-3">
+                                <label for="consumerKey" class="form-label">Consumer Key</label>
+                                <input type="text" class="form-control" id="consumerKey" name="consumerKey" required>
+                                <div class="form-text">From Netsuite: Setup > Integration > Token-based Authentication</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="consumerSecret" class="form-label">Consumer Secret</label>
+                                <input type="password" class="form-control" id="consumerSecret" name="consumerSecret" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="tokenId" class="form-label">Token ID</label>
+                                <input type="text" class="form-control" id="tokenId" name="tokenId" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="tokenSecret" class="form-label">Token Secret</label>
+                                <input type="password" class="form-control" id="tokenSecret" name="tokenSecret" required>
                             </div>
                             <button type="submit" class="btn btn-primary">Save Settings</button>
                         </form>

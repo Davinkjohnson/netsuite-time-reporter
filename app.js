@@ -7,8 +7,8 @@ let state = {
     projects: [],
     timeEntries: [],
     settings: {
-        netsuiteUrl: '',
-        accountId: '',
+        netsuiteUrl: 'https://5507085.app.netsuite.com',
+        accountId: '5507085',
         username: '',
         password: ''
     },
@@ -136,57 +136,41 @@ async function handleSettingsSubmit(event) {
     event.preventDefault();
     
     const formData = new FormData(settingsForm);
-    let netsuiteUrl = formData.get('netsuiteUrl');
-    let accountId = formData.get('accountId');
-
-    // Try to extract Account ID from URL if not provided
-    if (!accountId && netsuiteUrl) {
-        try {
-            const url = new URL(netsuiteUrl);
-            const subdomain = url.hostname.split('.')[0];
-            if (subdomain && /^\d+$/.test(subdomain)) {
-                accountId = subdomain;
-                document.getElementById('accountId').value = accountId;
-            }
-        } catch (error) {
-            console.error('Error parsing URL:', error);
-        }
-    }
-
-    // Ensure URL ends with netsuite.com
-    if (!netsuiteUrl.includes('netsuite.com')) {
-        showError('Please enter a valid Netsuite URL (ending with netsuite.com)');
-        return;
-    }
-
-    // Ensure Account ID is provided
-    if (!accountId) {
-        showError('Please enter your Account ID. You can find it in your Netsuite URL (e.g., if your URL is https://1234567.app.netsuite.com, your Account ID is 1234567)');
-        return;
-    }
-
     const newSettings = {
-        netsuiteUrl,
-        accountId,
+        netsuiteUrl: 'https://5507085.app.netsuite.com',
+        accountId: '5507085',
         username: formData.get('username'),
-        password: formData.get('password')
+        password: formData.get('password'),
+        tba: {
+            consumerKey: formData.get('consumerKey'),
+            consumerSecret: formData.get('consumerSecret'),
+            tokenId: formData.get('tokenId'),
+            tokenSecret: formData.get('tokenSecret')
+        }
     };
 
     try {
-        // Save to IndexedDB first
-        await db.saveSettings(newSettings);
-        
-        // Update state
-        state.settings = newSettings;
-
         // Initialize Netsuite API
         state.netsuiteAPI = createNetsuiteAPI(
-            state.settings.netsuiteUrl,
-            state.settings.accountId
+            newSettings.netsuiteUrl,
+            newSettings.accountId
         );
 
-        // Authenticate with Netsuite
-        await authenticateNetsuite();
+        // Set TBA credentials
+        await state.netsuiteAPI.setTBACredentials(newSettings.tba);
+
+        // Test authentication
+        await state.netsuiteAPI.authenticate(
+            newSettings.username,
+            newSettings.password
+        );
+
+        // Save settings only after successful authentication
+        await db.saveSettings(newSettings);
+        state.settings = newSettings;
+
+        // Load projects
+        await loadProjects();
         
         showSuccess('Settings saved successfully');
         switchTab('timeEntry'); // Switch back to time entry tab after successful save
@@ -311,10 +295,14 @@ function populateProjectSelect() {
 }
 
 function populateSettingsForm() {
-    document.getElementById('netsuiteUrl').value = state.settings.netsuiteUrl;
-    document.getElementById('accountId').value = state.settings.accountId;
     document.getElementById('username').value = state.settings.username;
     document.getElementById('password').value = state.settings.password;
+    if (state.settings.tba) {
+        document.getElementById('consumerKey').value = state.settings.tba.consumerKey;
+        document.getElementById('consumerSecret').value = state.settings.tba.consumerSecret;
+        document.getElementById('tokenId').value = state.settings.tba.tokenId;
+        document.getElementById('tokenSecret').value = state.settings.tba.tokenSecret;
+    }
 }
 
 function switchTab(tabName) {

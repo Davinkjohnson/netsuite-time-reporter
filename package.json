@@ -1,7 +1,7 @@
 {
   "name": "netsuite-time-reporter",
   "version": "1.0.0",
-  "description": "PWA for Netsuite time reporting automation",
+  "description": "Mobile PWA for Netsuite time reporting automation",
   "main": "app.js",
   "scripts": {
     "start": "http-server . -p 3000",
@@ -10,7 +10,9 @@
   },
   "dependencies": {
     "http-server": "^14.1.1",
-    "canvas": "^2.11.0"
+    "canvas": "^2.11.0",
+    "crypto-js": "^4.2.0",
+    "sharp": "^0.32.6"
   },
   "devDependencies": {
     "nodemon": "^2.0.22"
