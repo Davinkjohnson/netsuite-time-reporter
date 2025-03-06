@@ -136,9 +136,38 @@ async function handleSettingsSubmit(event) {
     event.preventDefault();
     
     const formData = new FormData(settingsForm);
+    let netsuiteUrl = formData.get('netsuiteUrl');
+    let accountId = formData.get('accountId');
+
+    // Try to extract Account ID from URL if not provided
+    if (!accountId && netsuiteUrl) {
+        try {
+            const url = new URL(netsuiteUrl);
+            const subdomain = url.hostname.split('.')[0];
+            if (subdomain && /^\d+$/.test(subdomain)) {
+                accountId = subdomain;
+                document.getElementById('accountId').value = accountId;
+            }
+        } catch (error) {
+            console.error('Error parsing URL:', error);
+        }
+    }
+
+    // Ensure URL ends with netsuite.com
+    if (!netsuiteUrl.includes('netsuite.com')) {
+        showError('Please enter a valid Netsuite URL (ending with netsuite.com)');
+        return;
+    }
+
+    // Ensure Account ID is provided
+    if (!accountId) {
+        showError('Please enter your Account ID. You can find it in your Netsuite URL (e.g., if your URL is https://1234567.app.netsuite.com, your Account ID is 1234567)');
+        return;
+    }
+
     const newSettings = {
-        netsuiteUrl: formData.get('netsuiteUrl'),
-        accountId: formData.get('accountId'),
+        netsuiteUrl,
+        accountId,
         username: formData.get('username'),
         password: formData.get('password')
     };
@@ -163,7 +192,7 @@ async function handleSettingsSubmit(event) {
         switchTab('timeEntry'); // Switch back to time entry tab after successful save
     } catch (error) {
         console.error('Error saving settings:', error);
-        showError('Failed to save settings. Please make sure you\'re using a supported browser and have enabled cookies.');
+        showError('Failed to save settings. Please make sure your Netsuite credentials are correct.');
     }
 }
 
