@@ -1,6 +1,7 @@
 const DB_NAME = 'timeReporterDB';
-const DB_VERSION = 1;
-const STORE_NAME = 'timeEntries';
+const DB_VERSION = 2;
+const TIME_ENTRIES_STORE = 'timeEntries';
+const SETTINGS_STORE = 'settings';
 
 class Database {
     constructor() {
@@ -20,10 +21,17 @@ class Database {
 
             request.onupgradeneeded = (event) => {
                 const db = event.target.result;
-                if (!db.objectStoreNames.contains(STORE_NAME)) {
-                    const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                
+                // Create time entries store if it doesn't exist
+                if (!db.objectStoreNames.contains(TIME_ENTRIES_STORE)) {
+                    const store = db.createObjectStore(TIME_ENTRIES_STORE, { keyPath: 'id' });
                     store.createIndex('date', 'date', { unique: false });
                     store.createIndex('status', 'status', { unique: false });
+                }
+                
+                // Create settings store if it doesn't exist
+                if (!db.objectStoreNames.contains(SETTINGS_STORE)) {
+                    db.createObjectStore(SETTINGS_STORE, { keyPath: 'id' });
                 }
             };
         });
@@ -32,8 +40,8 @@ class Database {
     async saveTimeEntry(timeEntry) {
         await this.initPromise;
         return new Promise((resolve, reject) => {
-            const transaction = this.db.transaction([STORE_NAME], 'readwrite');
-            const store = transaction.objectStore(STORE_NAME);
+            const transaction = this.db.transaction([TIME_ENTRIES_STORE], 'readwrite');
+            const store = transaction.objectStore(TIME_ENTRIES_STORE);
             const request = store.put(timeEntry);
 
             request.onsuccess = () => resolve(timeEntry);
@@ -44,8 +52,8 @@ class Database {
     async loadTimeEntries() {
         await this.initPromise;
         return new Promise((resolve, reject) => {
-            const transaction = this.db.transaction([STORE_NAME], 'readonly');
-            const store = transaction.objectStore(STORE_NAME);
+            const transaction = this.db.transaction([TIME_ENTRIES_STORE], 'readonly');
+            const store = transaction.objectStore(TIME_ENTRIES_STORE);
             const request = store.getAll();
 
             request.onsuccess = () => resolve(request.result);
@@ -56,8 +64,8 @@ class Database {
     async updateTimeEntry(timeEntry) {
         await this.initPromise;
         return new Promise((resolve, reject) => {
-            const transaction = this.db.transaction([STORE_NAME], 'readwrite');
-            const store = transaction.objectStore(STORE_NAME);
+            const transaction = this.db.transaction([TIME_ENTRIES_STORE], 'readwrite');
+            const store = transaction.objectStore(TIME_ENTRIES_STORE);
             const request = store.put(timeEntry);
 
             request.onsuccess = () => resolve(timeEntry);
@@ -68,12 +76,37 @@ class Database {
     async getPendingEntries() {
         await this.initPromise;
         return new Promise((resolve, reject) => {
-            const transaction = this.db.transaction([STORE_NAME], 'readonly');
-            const store = transaction.objectStore(STORE_NAME);
+            const transaction = this.db.transaction([TIME_ENTRIES_STORE], 'readonly');
+            const store = transaction.objectStore(TIME_ENTRIES_STORE);
             const statusIndex = store.index('status');
             const request = statusIndex.getAll('pending');
 
             request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    // New methods for settings storage
+    async saveSettings(settings) {
+        await this.initPromise;
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction([SETTINGS_STORE], 'readwrite');
+            const store = transaction.objectStore(SETTINGS_STORE);
+            const request = store.put({ id: 'user-settings', ...settings });
+
+            request.onsuccess = () => resolve(settings);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async loadSettings() {
+        await this.initPromise;
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction([SETTINGS_STORE], 'readonly');
+            const store = transaction.objectStore(SETTINGS_STORE);
+            const request = store.get('user-settings');
+
+            request.onsuccess = () => resolve(request.result || null);
             request.onerror = () => reject(request.error);
         });
     }

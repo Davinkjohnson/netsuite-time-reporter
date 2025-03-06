@@ -34,10 +34,15 @@ document.addEventListener('DOMContentLoaded', () => {
 // Initialize application
 async function initializeApp() {
     try {
-        // Load settings from localStorage
-        const savedSettings = localStorage.getItem('settings');
+        // Check for IndexedDB support
+        if (!window.indexedDB) {
+            throw new Error('Your browser doesn\'t support IndexedDB. Please use a modern browser.');
+        }
+
+        // Load settings from IndexedDB
+        const savedSettings = await db.loadSettings();
         if (savedSettings) {
-            state.settings = JSON.parse(savedSettings);
+            state.settings = savedSettings;
             populateSettingsForm();
             
             // Initialize Netsuite API
@@ -57,7 +62,7 @@ async function initializeApp() {
         updateUI();
     } catch (error) {
         console.error('Initialization error:', error);
-        showError('Failed to initialize application');
+        showError('Failed to initialize application. Please make sure you\'re using a supported browser and have enabled cookies.');
     }
 }
 
@@ -131,7 +136,7 @@ async function handleSettingsSubmit(event) {
     event.preventDefault();
     
     const formData = new FormData(settingsForm);
-    state.settings = {
+    const newSettings = {
         netsuiteUrl: formData.get('netsuiteUrl'),
         accountId: formData.get('accountId'),
         username: formData.get('username'),
@@ -139,6 +144,12 @@ async function handleSettingsSubmit(event) {
     };
 
     try {
+        // Save to IndexedDB first
+        await db.saveSettings(newSettings);
+        
+        // Update state
+        state.settings = newSettings;
+
         // Initialize Netsuite API
         state.netsuiteAPI = createNetsuiteAPI(
             state.settings.netsuiteUrl,
@@ -147,14 +158,12 @@ async function handleSettingsSubmit(event) {
 
         // Authenticate with Netsuite
         await authenticateNetsuite();
-
-        // Save to localStorage
-        localStorage.setItem('settings', JSON.stringify(state.settings));
         
         showSuccess('Settings saved successfully');
+        switchTab('timeEntry'); // Switch back to time entry tab after successful save
     } catch (error) {
         console.error('Error saving settings:', error);
-        showError('Failed to save settings');
+        showError('Failed to save settings. Please make sure you\'re using a supported browser and have enabled cookies.');
     }
 }
 
